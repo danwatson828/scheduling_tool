@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/NavBar";
-import { Toaster } from "@/components/ui/sonner"; // If we use sonner, need to install it. Or use simple alert.
-// I'll skip toaster for now or install it.
+
 
 const inter = Inter({ subsets: ["latin"] });
 
