@@ -104,7 +104,6 @@ export function NewTaskDialog({ users, existingCustomers, onAddTask }: NewTaskDi
             addedDate: new Date().toISOString().split('T')[0], // Today
             presentationDate: presentationDate || undefined,
             estimatedCompletionDate: date, // Placeholder, would be calc'd
-            status: 'In Progress'
         };
 
         const newSubtaskObjects: Subtask[] = validSubtasks.map(s => ({

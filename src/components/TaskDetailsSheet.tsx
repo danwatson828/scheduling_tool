@@ -57,9 +57,9 @@ export function TaskDetailsSheet({ isOpen, onClose, subtask, task, analyst, onUp
             ...subtask,
             stage: newStage,
             // Auto-set completion date if marking as completed
-            completionDate: newStage === 'Completed'
+            completionDate: (newStage as string) === 'Completed'
                 ? new Date().toISOString().split('T')[0]
-                : (newStage !== 'Completed' && subtask.completionDate ? undefined : subtask.completionDate)
+                : ((newStage as string) !== 'Completed' && subtask.completionDate ? undefined : subtask.completionDate)
         };
         onUpdateSubtask(updatedSubtask);
     };

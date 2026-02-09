@@ -111,7 +111,7 @@ function DraggableTask({ subtask, task, width, left, top, height, isOverlay = fa
 }
 
 // --- Droppable Cell Component ---
-function DroppableCell({ date, userId, children, height }: { date: Date, userId: number, children: React.ReactNode, height: number }) {
+function DroppableCell({ date, userId, children, height }: { date: Date, userId: number, children?: React.ReactNode, height: number }) {
     const { setNodeRef, isOver } = useDroppable({
         id: `${userId}|${date.toISOString()}`,
         data: { date, userId }
