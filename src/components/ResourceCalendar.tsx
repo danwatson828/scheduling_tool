@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { addTask, addSubtask, updateSubtask } from "@/app/actions";
 
 // Helper to abbreviate stage names for compact display
 const getStageAbbreviation = (stage: string): string => {
@@ -134,11 +135,11 @@ function DroppableCell({ date, userId, children, height }: { date: Date, userId:
 
 interface ResourceCalendarProps {
     users: User[];
-    subtasks: Subtask[];
-    tasks: Task[];
+    initialSubtasks: Subtask[];
+    initialTasks: Task[];
 }
 
-export function ResourceCalendar({ users, subtasks: initialSubtasks, tasks: initialTasks }: ResourceCalendarProps) {
+export function ResourceCalendar({ users, initialSubtasks, initialTasks }: ResourceCalendarProps) {
     const [currentDate, setCurrentDate] = useState(new Date("2023-11-01"));
     const [localSubtasks, setLocalSubtasks] = useState(initialSubtasks);
     const [localTasks, setLocalTasks] = useState(initialTasks);
@@ -193,23 +194,59 @@ export function ResourceCalendar({ users, subtasks: initialSubtasks, tasks: init
             const subtaskId = parseInt(active.id as string);
 
             // INDEPENDENT SCHEDULING: Update subtask.startDate, NOT task.requestedDate
+            // Update local state (optimistic)
             setLocalSubtasks(prev => prev.map(s => {
                 if (s.id === subtaskId) {
                     return {
                         ...s,
                         assignedAnalystId: newUserId,
-                        startDate: newDate.toISOString().split('T')[0] // Update start date
+                        startDate: newDate.toISOString().split('T')[0],
+                        // Clear calculated completion date if manually moved, or re-calculate?
+                        // For now, keep simple.
                     };
                 }
                 return s;
             }));
+
+            // Call Server Action
+            updateSubtask(subtaskId, {
+                assignedAnalystId: newUserId,
+                startDate: newDate.toISOString().split('T')[0]
+            });
             // No longer updating localTasks (parent task) dates
         }
     };
 
     const handleAddTask = (newTask: Task, newSubtasks: Subtask[]) => {
+        // Optimistic update
         setLocalTasks(prev => [...prev, newTask]);
         setLocalSubtasks(prev => [...prev, ...newSubtasks]);
+
+        // Call Server Actions
+        // Note: In a real app we'd await these, but for optimistic UI we fire and forget or handle errors.
+        // We really should sequence them: add task -> get ID -> add subtasks.
+        // However, our `newTask` here has a temporary ID. The DB will assign a real ID.
+        // This mismatch is tricky for optimistic UI without a proper cache/sync.
+        // For this MVP, we will simpler: call server actions and let the page refresh handle the new data.
+        // But we need to handle the ID mapping.
+
+        // Actually, since we are using revalidatePath in actions, the page will refresh.
+        // So we can just await the actions.
+
+        const createFullTask = async () => {
+            // 1. Add Task
+            const createdTask = await addTask(newTask);
+
+            // 2. Add Subtasks with real task ID
+            for (const sub of newSubtasks) {
+                await addSubtask({
+                    ...sub,
+                    taskId: createdTask.id
+                });
+            }
+        };
+
+        createFullTask();
     };
 
     const activeSubtask = activeId ? localSubtasks.find(s => s.id.toString() === activeId) : null;
@@ -278,6 +315,7 @@ export function ResourceCalendar({ users, subtasks: initialSubtasks, tasks: init
 
     const handleUpdateSubtask = (updatedSubtask: Subtask) => {
         setLocalSubtasks(prev => prev.map(s => s.id === updatedSubtask.id ? updatedSubtask : s));
+        updateSubtask(updatedSubtask.id, updatedSubtask);
     };
 
     return (

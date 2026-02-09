@@ -12,9 +12,10 @@ export const subtaskStageEnum = pgEnum('subtask_stage', [
 
 export const users = pgTable('users', {
     id: serial('id').primaryKey(),
-    clerkId: text('clerk_id').unique().notNull(),
+    clerkId: text('clerk_id').unique(), // Made optional/nullable for seed data compatibility if needed, or keep unique
     name: text('name').notNull(),
     role: userRoleEnum('role').notNull().default('Analyst'),
+    avatar: text('avatar'),
     createdAt: timestamp('created_at').defaultNow(),
 });
 
@@ -22,9 +23,11 @@ export const tasks = pgTable('tasks', {
     id: serial('id').primaryKey(),
     customerName: text('customer_name').notNull(),
     taskType: taskTypeEnum('task_type').notNull(),
-    leadAnalystId: integer('lead_analyst_id').references(() => users.id), // Can be null initially
+    leadAnalystId: integer('lead_analyst_id').references(() => users.id),
     priority: integer('priority').notNull().default(3),
     requestedDate: date('requested_date'),
+    addedDate: date('added_date').defaultNow(),
+    presentationDate: date('presentation_date'),
     estimatedCompletionDate: date('estimated_completion_date'),
     createdAt: timestamp('created_at').defaultNow(),
 });
@@ -35,6 +38,9 @@ export const subtasks = pgTable('subtasks', {
     name: text('name').notNull(),
     assignedAnalystId: integer('assigned_analyst_id').references(() => users.id),
     stage: subtaskStageEnum('stage').notNull().default('Data Validation'),
+    startDate: date('start_date'),
+    dueDate: date('due_date'),
+    completionDate: date('completion_date'),
     estimatedHours: integer('estimated_hours').notNull().default(0),
     blockedReason: text('blocked_reason'),
     createdAt: timestamp('created_at').defaultNow(),

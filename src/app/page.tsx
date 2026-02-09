@@ -1,14 +1,16 @@
-"use client";
-
-import { users, subtasks, tasks } from "@/lib/data";
 import { ResourceCalendar } from "@/components/ResourceCalendar";
 import {
     Card,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import { getInitialData } from "./actions";
 
-export default function DashboardPage() {
+// This is now a Server Component
+export default async function DashboardPage() {
+    const { users, tasks, subtasks } = await getInitialData();
+
+    // Calculate stats based on DB data
     const activeSubtasks = subtasks.filter(s => s.stage !== 'Completed').length;
     const totalAnalytics = users.filter(u => u.role.includes('Analyst')).length;
 
@@ -34,7 +36,12 @@ export default function DashboardPage() {
                 </Card>
             </div>
 
-            <ResourceCalendar users={users} subtasks={subtasks} tasks={tasks} />
+            {/* Pass DB data to the client component */}
+            <ResourceCalendar
+                users={users}
+                initialSubtasks={subtasks}
+                initialTasks={tasks}
+            />
         </div>
     );
 }
